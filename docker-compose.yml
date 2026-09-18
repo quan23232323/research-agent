@@ -1,0 +1,20 @@
+services:
+  research-agent:
+    build: .
+    container_name: research-agent
+    ports:
+      - "8000:8000"
+    env_file:
+      - path: .env            # 没有该文件也能启动（Mock 模式）
+        required: false
+    volumes:
+      - ./reports:/app/reports   # 生成的报告持久化到宿主机
+      - ./data:/app/data         # SQLite 任务历史持久化
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c",
+             "import urllib.request;urllib.request.urlopen('http://127.0.0.1:8000/api/health', timeout=5)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s

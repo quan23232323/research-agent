@@ -1,0 +1,61 @@
+# 模型分层选型 —— 对应《产品设计方案》5.1：不同环节对模型能力要求差异极大
+# 具体型号按当期刊例价自行调整；DeepSeek 全系一个型号时可按档位语义注释理解
+models:
+  planner:                      # 旗舰档：规划质量决定全局，只调用 1 次，值得花
+    model: "deepseek-chat"
+    fallback_models: ["deepseek-chat"]   # L2 兜底：同档位备选
+  researcher:                   # 中档：ReAct 循环 10+ 次，是成本大头（GLM 用户可填 glm-4-air）
+    model: "deepseek-chat"
+    fallback_models: ["deepseek-chat"]
+  writer:                       # 中档偏上：写作质量用户直接感知
+    model: "deepseek-chat"
+    fallback_models: ["deepseek-chat"]
+  reviewer:                     # 中档：核查任务，指令遵循 > 创造力
+    model: "deepseek-chat"
+    fallback_models: ["deepseek-chat"]
+  followup:                     # 中档：报告追问，基于已收集素材的轻量问答
+    model: "deepseek-chat"
+    fallback_models: ["deepseek-chat"]
+
+# 成本防线 —— 对应设计方案第 6 节
+budget:
+  max_total_tokens: 150000      # 单份报告 Token 硬顶，超限走 L3 部分交付
+  max_react_rounds: 6           # 单子问题 ReAct 循环上限，防死循环烧钱
+  reviewer_rewrite_limit: 2     # 自检打回重写上限
+  search_concurrency: 3         # 子问题并行检索并发数（设计方案 5.3 延迟策略）
+  max_sources: 12               # 写入报告的素材上限（控制 Writer 输入 Token）
+
+# 服务约束
+server:
+  max_concurrent_tasks: 3       # 同时运行的研究任务上限（超出返回 429）
+  rate_limit_per_min: 30        # 每 IP 每分钟「全部写入类接口合计」上限（0 = 关闭限流）
+                                # 注意是跨接口合计而非按路径计数：按路径计数会让调用方靠换 URL 绕过配额
+                                # 多人共用同一出口 IP（办公室 NAT）时请适当调高
+  trust_proxy: false            # 部署在 Nginx 等反向代理后置 true，按 X-Forwarded-For 首跳识别真实客户端 IP
+                                # 注意：未经过可信反代时开启会被伪造头绕过限流，直连部署务必保持 false
+
+# 安全
+security:
+  auth_token: ""                # 非空则所有 /api/*（除 health）要求 X-API-Key 头；可用环境变量 AUTH_TOKEN 覆盖
+  expose_docs: false            # 是否开放 /docs、/redoc、/openapi.json（生产建议保持 false，避免接口契约外泄）
+
+# 导出
+export:
+  html: true                    # 报告落盘时同时生成独立 HTML 版本
+
+# 搜索兜底链 —— 对应设计方案 7.1 L1：duckduckgo → tavily → bocha
+search:
+  primary: "duckduckgo"
+  request_timeout: 15
+  page_max_chars: 4000          # read_page 正文截断（Token 预算控制）
+
+# 输入校验 —— 对应设计方案 7.1 L0
+input:
+  topic_max_chars: 200
+  question_max_chars: 500
+  sensitive_words: ["枪械制造", "毒品制造", "爆炸物制作"]   # 示例，可自行扩展
+
+# 成本估算（可选）：每百万 Token 单价（元）。不填则前端只展示 Token 数
+prices:
+  input: 2.0
+  output: 8.0

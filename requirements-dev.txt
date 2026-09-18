@@ -1,0 +1,5 @@
+# 开发/CI 依赖：pip install -r requirements-dev.txt
+ruff>=0.16          # lint + import 排序（配置见 pyproject.toml [tool.ruff]）
+mypy>=1.14          # 类型检查（配置见 pyproject.toml [tool.mypy]）
+types-Markdown      # markdown 库类型存根
+types-PyYAML        # yaml 库类型存根

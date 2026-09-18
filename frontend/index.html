@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>智能研究助手 Agent</title>
+  <link rel="stylesheet" href="css/style.css?v=1.3.1" />
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.9/dist/purify.min.js"></script>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand" id="brandHome">
+      <span class="logo">R</span>
+      <div>
+        <h1>智能研究助手 Agent <span id="verBadge" class="ver"></span></h1>
+        <p class="sub">规划 → 检索 → 撰写 → 自检，交付带参考来源的研究报告</p>
+      </div>
+    </div>
+    <nav class="tabs">
+      <button class="tab active" data-view="new">新建研究</button>
+      <button class="tab" data-view="history">历史记录</button>
+      <button class="tab" data-view="stats">统计</button>
+    </nav>
+    <div class="top-right">
+      <span id="modeBadge" class="badge hidden">MOCK 模式</span>
+      <button id="settingsBtn" class="icon-btn" title="设置">⚙</button>
+      <div id="settingsPop" class="settings-pop hidden">
+        <label>访问令牌（服务端启用鉴权时必填）</label>
+        <input id="tokenInput" type="password" placeholder="X-API-Key" />
+        <div class="btn-row">
+          <button id="tokenSaveBtn" class="btn primary small">保存</button>
+          <button id="tokenClearBtn" class="btn ghost small">清除</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <!-- ═══════════ 视图：新建研究 ═══════════ -->
+    <section id="view-new" class="view">
+      <!-- ① 主题输入（设计方案 3.2①） -->
+      <section id="setupCard" class="card">
+        <h2>研究主题</h2>
+        <div class="field">
+          <input id="topicInput" type="text" maxlength="200" placeholder="例如：大模型在电力行业的应用现状" />
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label>研究深度</label>
+            <select id="depthSelect">
+              <option value="quick">快速（3 个子问题）</option>
+              <option value="standard" selected>标准（4 个子问题）</option>
+              <option value="deep">深入（5 个子问题）</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>报告篇幅</label>
+            <select id="lengthSelect">
+              <option value="short">精简（约 1000 字）</option>
+              <option value="medium" selected>标准（约 2000 字）</option>
+              <option value="long">详尽（约 3000 字）</option>
+            </select>
+          </div>
+        </div>
+        <div class="field">
+          <label>关注角度（可选）</label>
+          <input id="angleInput" type="text" placeholder="例如：侧重技术路线与落地案例" />
+        </div>
+        <button id="planBtn" class="btn primary">生成研究计划</button>
+        <p id="setupError" class="error-text hidden"></p>
+      </section>
+
+      <!-- ② 任务规划（可干预：增删改子问题，设计方案 3.2②） -->
+      <section id="planCard" class="card hidden">
+        <h2>研究计划 <span class="hint">可增删改子问题后再开始</span></h2>
+        <div id="subqList"></div>
+        <button id="addSubqBtn" class="btn ghost">+ 添加子问题</button>
+        <div class="btn-row">
+          <button id="backBtn" class="btn ghost">返回修改主题</button>
+          <button id="startBtn" class="btn primary">开始研究</button>
+        </div>
+      </section>
+
+      <!-- ③ 进度反馈（设计方案 3.2③） -->
+      <section id="progressCard" class="card hidden">
+        <div class="steps">
+          <div class="step" data-step="plan"><i></i>规划</div>
+          <div class="step" data-step="research"><i></i>检索</div>
+          <div class="step" data-step="write"><i></i>撰写</div>
+          <div class="step" data-step="review"><i></i>自检</div>
+        </div>
+        <p id="stageDetail" class="stage-detail">准备中…</p>
+        <div class="meta-row">
+          <span id="elapsed">耗时 0s</span>
+          <span id="tokenCount">Token 0</span>
+        </div>
+        <details open class="trace-box">
+          <summary>工具调用轨迹</summary>
+          <ul id="traceList"></ul>
+        </details>
+        <pre id="livePreview" class="live-preview hidden"></pre>
+      </section>
+
+      <!-- ⑤ 异常态（设计方案 3.2⑤：L4 + 部分交付原则） -->
+      <section id="errorCard" class="card hidden">
+        <h2>研究失败</h2>
+        <p id="errorMsg" class="error-text"></p>
+        <div id="partialSources" class="hidden">
+          <h3>已收集素材（不浪费原则）</h3>
+          <ol id="errorSourceList" class="sources"></ol>
+        </div>
+        <div class="btn-row">
+          <button id="retryBtn" class="btn primary">一键重试</button>
+          <button id="errorAgainBtn" class="btn ghost">返回首页</button>
+        </div>
+      </section>
+    </section>
+
+    <!-- ═══════════ 视图：任务详情（结果交付 3.2④ / 历史查看共用） ═══════════ -->
+    <section id="view-task" class="view hidden">
+      <div class="task-head card">
+        <div class="task-title-row">
+          <button id="taskBackBtn" class="btn ghost small">← 返回</button>
+          <span id="taskStatusBadge" class="status-badge"></span>
+          <span id="taskTime" class="hint"></span>
+        </div>
+        <h2 id="taskTopic">—</h2>
+        <div id="subqInfo" class="subq-info hidden"></div>
+      </div>
+      <section class="card">
+        <div id="partialBanner" class="banner warn hidden">⚠ 当前为降级交付（L3 素材汇编版）</div>
+        <div id="reviewNote" class="banner info hidden"></div>
+        <article id="reportBody" class="report"></article>
+        <h3>参考来源</h3>
+        <ol id="sourceList" class="sources"></ol>
+        <div class="btn-row">
+          <button id="downloadMdBtn" class="btn primary">下载 Markdown</button>
+          <button id="downloadHtmlBtn" class="btn ghost">下载 HTML</button>
+          <button id="printBtn" class="btn ghost">打印</button>
+          <button id="copyBtn" class="btn ghost">复制全文</button>
+        </div>
+        <div id="statsBox" class="stats"></div>
+
+        <!-- 追问与局部重写（设计方案 3.2④） -->
+        <div id="qaPanel" class="qa-panel hidden">
+          <h3>报告追问 <span class="hint">仅基于已收集素材作答，带来源角标</span></h3>
+          <div id="qaList"></div>
+          <div class="field-row">
+            <input id="qaInput" type="text" maxlength="500"
+                   placeholder="针对报告内容提问，例如：主要挑战有哪些？" />
+            <button id="qaAskBtn" class="btn primary">提问</button>
+          </div>
+        </div>
+        <div id="rewritePanel" class="rewrite-panel hidden">
+          <h3>局部重写 <span class="hint">其余小节与参考来源保持不变；重写前自动存档</span></h3>
+          <div class="field-row">
+            <select id="rewriteSection"></select>
+            <input id="rewriteFeedback" type="text" maxlength="500"
+                   placeholder="重写要求，例如：补充更多数据与案例" />
+            <button id="rewriteBtn" class="btn ghost">重写本节</button>
+          </div>
+          <p id="rewriteMsg" class="hint hidden"></p>
+        </div>
+        <div id="versionsPanel" class="rewrite-panel hidden">
+          <h3>历史版本 <span class="hint">每次重写/恢复前的快照，可查看与一键恢复</span></h3>
+          <div class="field-row">
+            <select id="versionSelect"></select>
+            <button id="versionViewBtn" class="btn ghost small">查看此版本</button>
+            <button id="versionRestoreBtn" class="btn ghost small">恢复此版本</button>
+            <button id="versionBackBtn" class="btn ghost small hidden">返回最新版</button>
+          </div>
+        </div>
+      </section>
+    </section>
+
+    <!-- ═══════════ 视图：历史记录 ═══════════ -->
+    <section id="view-history" class="view hidden">
+      <section class="card">
+        <h2>历史记录 <span class="hint" id="historyTotal"></span></h2>
+        <div class="field-row">
+          <input id="historySearch" type="text" placeholder="按主题关键词搜索历史…" />
+          <button id="historySearchBtn" class="btn primary">搜索</button>
+        </div>
+        <div class="table-wrap">
+          <table class="hist-table">
+            <thead>
+              <tr><th>时间</th><th>主题</th><th>状态</th><th>来源</th><th>耗时</th><th>成本</th><th>操作</th></tr>
+            </thead>
+            <tbody id="historyBody"></tbody>
+          </table>
+        </div>
+        <p id="historyEmpty" class="empty hidden">暂无历史记录——先去完成一次研究吧。</p>
+        <div class="btn-row">
+          <button id="historyMoreBtn" class="btn ghost hidden">加载更多</button>
+        </div>
+      </section>
+    </section>
+
+    <!-- ═══════════ 视图：统计 ═══════════ -->
+    <section id="view-stats" class="view hidden">
+      <section class="card">
+        <h2>运行统计</h2>
+        <div id="statsCards" class="stats-cards"></div>
+        <p class="hint">统计基于本地持久化数据（data/research.db），随报告历史一并保存。</p>
+      </section>
+    </section>
+  </main>
+
+  <div id="toastBox"></div>
+  <footer class="footer">智能研究助手 Agent · 四节点工作流 · L0–L4 分级兜底</footer>
+  <script src="js/app.js?v=1.3.1"></script>
+</body>
+</html>

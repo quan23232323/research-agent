@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install -r requirements-dev.txt
+
+      - name: Lint (ruff)
+        run: python -m ruff check backend tests scripts .
+
+      - name: Type check (mypy)
+        run: python -m mypy
+
+      - name: Run tests (offline, mock mode)
+        env:
+          MOCK_LLM: "1"
+          MOCK_SEARCH: "1"
+        run: python -m pytest tests/ -q
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Frontend syntax check
+        run: node --check frontend/js/app.js

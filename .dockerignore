@@ -1,0 +1,11 @@
+__pycache__/
+*.pyc
+.env
+.pytest_cache/
+reports/
+.git/
+node_modules/
+docs/
+tests/
+*.md
+!README.md

@@ -1,0 +1,25 @@
+{
+  "description": "评估集：技术/行业/公司/学术各 5 个主题，含 2 个冷门主题用于兜底路径验证（设计方案第 8 节）",
+  "topics": [
+    {"id": "tech-01", "category": "技术", "topic": "大模型推理加速技术 vLLM 与 TensorRT-LLM 对比", "expectations": ["吞吐对比", "显存管理"]},
+    {"id": "tech-02", "category": "技术", "topic": "RAG 系统中重排序模型的选型与实践", "expectations": ["rerank 模型", "效果提升"]},
+    {"id": "tech-03", "category": "技术", "topic": "多模态大模型在工业质检中的应用", "expectations": ["缺陷检测", "落地案例"]},
+    {"id": "tech-04", "category": "技术", "topic": "AI Agent 的记忆机制实现方案综述", "expectations": ["短期记忆", "长期记忆"]},
+    {"id": "tech-05", "category": "技术", "topic": "模型量化技术 GPTQ 与 AWQ 的原理与效果", "expectations": ["量化原理", "精度损失"]},
+    {"id": "ind-01", "category": "行业", "topic": "大模型在电力行业的应用现状与趋势", "expectations": ["电力场景", "发展趋势"]},
+    {"id": "ind-02", "category": "行业", "topic": "AI 编程助手对软件开发行业的影响", "expectations": ["效率数据", "行业变化"]},
+    {"id": "ind-03", "category": "行业", "topic": "2026 年具身智能机器人产业发展综述", "expectations": ["市场规模", "代表企业"]},
+    {"id": "ind-04", "category": "行业", "topic": "AI 制药行业的进展与挑战", "expectations": ["药物发现", "临床进展"]},
+    {"id": "ind-05", "category": "行业", "topic": "大模型在金融风控领域的应用现状", "expectations": ["风控场景", "合规要求"]},
+    {"id": "com-01", "category": "公司", "topic": "DeepSeek 公司的发展历程与技术路线", "expectations": ["开源模型", "技术特点"]},
+    {"id": "com-02", "category": "公司", "topic": "智谱 AI 的产品矩阵与商业化路径", "expectations": ["GLM 系列", "商业模式"]},
+    {"id": "com-03", "category": "公司", "topic": "Anthropic 公司的安全理念与产品布局", "expectations": ["Claude", "安全研究"]},
+    {"id": "com-04", "category": "公司", "topic": "Perplexity 的 AI 搜索产品分析", "expectations": ["产品形态", "商业模式"]},
+    {"id": "com-05", "category": "公司", "topic": "MiniMax 的多模态产品与战略方向", "expectations": ["产品线", "技术能力"]},
+    {"id": "aca-01", "category": "学术", "topic": "Transformer 架构的最新改进方向综述", "expectations": ["注意力改进", "效率优化"]},
+    {"id": "aca-02", "category": "学术", "topic": "大模型幻觉缓解方法的研究进展", "expectations": ["幻觉成因", "缓解方法"]},
+    {"id": "aca-03", "category": "学术", "topic": "检索增强生成（RAG）的前沿研究综述", "expectations": ["GraphRAG", "Agentic RAG"]},
+    {"id": "aca-04", "category": "学术", "topic": "稀疏小众主题：圆斑星鲽养殖技术研究现状", "expectations": [], "cold": true},
+    {"id": "aca-05", "category": "学术", "topic": "小众前沿：拓扑量子电路在容错计算中的探索", "expectations": [], "cold": true}
+  ]
+}
