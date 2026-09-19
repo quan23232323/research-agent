@@ -1,0 +1,78 @@
+{
+  "generated_at": "2026-09-19T18:57:50",
+  "mock": false,
+  "depth": "quick",
+  "length": "short",
+  "rows": [
+    {
+      "id": "533d337589b9",
+      "topic": "大模型推理加速技术 vLLM 与 TensorRT-LLM 对比",
+      "status": "done",
+      "elapsed": 326.1,
+      "tokens": 77788,
+      "cost": 0.2332,
+      "sources": 12,
+      "subq_failed": 0,
+      "rewrites": 2,
+      "points": 6,
+      "point_support_rate": 1.0,
+      "cite_valid_rate": 1.0
+    },
+    {
+      "id": "0f0bdf29b79f",
+      "topic": "RAG 系统中重排序模型的选型与实践",
+      "status": "done",
+      "elapsed": 303.8,
+      "tokens": 75947,
+      "cost": 0.2296,
+      "sources": 12,
+      "subq_failed": 0,
+      "rewrites": 2,
+      "points": 5,
+      "point_support_rate": 1.0,
+      "cite_valid_rate": 1.0
+    },
+    {
+      "id": "cd8afb76df9e",
+      "topic": "多模态大模型在工业质检中的应用",
+      "status": "done",
+      "elapsed": 259.3,
+      "tokens": 79615,
+      "cost": 0.2466,
+      "sources": 12,
+      "subq_failed": 0,
+      "rewrites": 1,
+      "points": 5,
+      "point_support_rate": 1.0,
+      "cite_valid_rate": 1.0
+    },
+    {
+      "id": "9050075dbff7",
+      "topic": "AI Agent 的记忆机制实现方案综述",
+      "status": "done",
+      "elapsed": 295.1,
+      "tokens": 78637,
+      "cost": 0.2239,
+      "sources": 12,
+      "subq_failed": 0,
+      "rewrites": 2,
+      "points": 6,
+      "point_support_rate": 1.0,
+      "cite_valid_rate": 1.0
+    },
+    {
+      "id": "5153cd5d7be9",
+      "topic": "模型量化技术 GPTQ 与 AWQ 的原理与效果",
+      "status": "done",
+      "elapsed": 309.7,
+      "tokens": 74146,
+      "cost": 0.2688,
+      "sources": 12,
+      "subq_failed": 0,
+      "rewrites": 1,
+      "points": 5,
+      "point_support_rate": 1.0,
+      "cite_valid_rate": 1.0
+    }
+  ]
+}

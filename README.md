@@ -31,7 +31,7 @@
 | 模型分层选型（5.1） | `config.yaml` 按 planner/researcher/writer/reviewer/followup 分档 |
 | 成本防线（第 6 节） | Token 硬顶 150K、ReAct 循环上限 6 轮、素材上限 12 条、URL/查询缓存 |
 | L0 输入校验（7.1） | 空输入 / 超长 / 敏感词，`backend/api/routes.py: validate_topic` |
-| L1 工具失败 | 重试 2 次 → 切换搜索源（duckduckgo→tavily→bocha）→ 跳过并标记 |
+| L1 工具失败 | 重试 2 次 → 切换搜索源（主源→tavily/bocha（有 Key 才启用）→bing→duckduckgo）→ 跳过并标记 |
 | L2 模型失败 | 指数退避 ×3 → 同档位备选模型互换；流式失败降级为普通调用 |
 | L3 撰写失败/预算触顶 | 自动降级「素材汇编版」报告（不经 LLM，直接由素材拼装） |
 | L4 全局失败 | 明确报错 + 已收集素材返回前端（部分交付原则 7.3） |
@@ -55,7 +55,8 @@ copy .env.example .env    # 填入 LLM_BASE_URL / LLM_API_KEY / AUTH_TOKEN
 ```
 
 - **不配置 API Key 也能跑**：自动进入全离线 Mock 模式（LLM 与搜索均为确定性模拟），用于演示与自动化测试。
-- 真实搜索默认用 DuckDuckGo（免费，需安装 `ddgs`）；可选填 `TAVILY_API_KEY` / `BOCHA_API_KEY` 作为 L1 备用搜索源。
+- **真实搜索默认用必应网页结果**（免 Key，国内网络下可用）；可选填 `TAVILY_API_KEY` / `BOCHA_API_KEY` 接入商业搜索源，`ddgs`（DuckDuckGo）留在兜底链末端。
+  默认主源之所以不是 DuckDuckGo：它在国内网络下经常整体不可达，放在主位会让每次检索先白等两轮重试。
 - 模型档位、Token 预算、限流、敏感词、并发与导出开关在 `config.yaml` 调整。
 
 ### 3. 启动
@@ -99,7 +100,7 @@ docker compose up -d --build
 ## 测试与评估
 
 ```bash
-python -m pytest tests/ -q       # 56 项：单元 / 冒烟（正常、L1、L2 流式降级、L3、L4、重写循环）/ API 集成 / 持久化 / 安全 / 版本历史
+python -m pytest tests/ -q       # 66 项：单元 / 冒烟（正常、L1、L2 流式降级、L3、L4、重写循环）/ API 集成 / 持久化 / 安全 / 版本历史 / 评估指标口径
 node --check frontend/js/app.js  # 前端语法检查（CI 中执行）
 
 # lint 与类型检查（CI 门禁；配置见 pyproject.toml）
@@ -112,6 +113,10 @@ python scripts/smoke_e2e.py      # 端到端冒烟：真起服务，验证鉴权
 # 评估集跑分（Mock 演示；--real 需真实 Key）
 python scripts/evaluate.py --count 5 --depth quick
 python scripts/evaluate.py --count 20 --real --output docs/evaluation-report.md
+
+# 逐主题原始数据会同时落到 docs/evaluation-rows.json；
+# 调整指标口径后可直接离线重算报告，无需重新调用模型（零成本）：
+python scripts/evaluate.py --reuse docs/evaluation-rows.json --output docs/evaluation-report.md
 ```
 
 全部测试离线运行（Mock 模式），无需任何 API Key。
@@ -123,14 +128,41 @@ python scripts/evaluate.py --count 20 --real --output docs/evaluation-report.md
 | 指标 | 含义 |
 | --- | --- |
 | 完成率 | 成功交付报告的主题数 / 总主题数 |
-| 要点支撑率 | 报告中每个要点能否在已收集素材里找到依据（衡量「无来源不陈述」的落实程度） |
-| 角标有效率 | 引用角标 `[n]` 是否都落在来源列表范围内，越界即无效 |
+| 要点支撑率 | `核心要点` 小节里各列表项是否带来源角标（兼容 `-`/`*` 与 `1.` 两类写法），衡量「无来源不陈述」的落实程度 |
+| 角标有效率 | 正文角标 `[n]` 落在参考来源编号范围内的占比；统计时剔除参考来源小节自身的 `[n]` 列表标签 |
 | 平均来源数 | 每份报告实际引用的来源条数 |
 | 平均 Token 与成本 | 按 `config.yaml` 的 `prices` 单价折算，用于成本回归 |
 | 子问题失败总数 / 触发重写总数 | 兜底机制与自检机制被真实触发的次数 |
 
-> ⚠️ **当前仓库里的 `docs/evaluation-report.md` 是 Mock 模式产物**：LLM 与搜索均为确定性模拟（端到端耗时约 0.5s），它只能证明评估脚本本身跑得通，**不代表真实模型效果**。
-> 填入 API Key 后跑真实评估即可覆盖该文件：
+### 真实评估结果（2026-09-19 实测）
+
+在评估集前 5 个主题上跑完整链路（`quick` / `short`），**LLM 与搜索均为真实调用**：
+
+| 指标 | 结果 |
+| --- | --- |
+| 完成率 | **5/5** |
+| 核心要点总数 | 27 |
+| 平均要点支撑率 | **1.0**（27 个要点全部带来源角标） |
+| 平均角标有效率 | **1.0**（无越界角标） |
+| 平均端到端时长 | 298.8s |
+| 平均 Token | 77,227 |
+| 平均来源数 | 12.0 |
+| 子问题失败总数 | **0** |
+| 触发重写总数 | **8**（5 个主题全部至少被打回 1 次） |
+| 合计成本 | **¥1.20**（平均 ¥0.24/主题，按 `config.yaml` 的 `prices` 折算） |
+
+**怎么读这组数字（含不利解读）：**
+
+- 支撑率与角标有效率都是 1.0，说明「无来源不陈述」的硬约束被稳定遵守；但它们是**守门指标而非质量上限指标**——写作环节被要求逐条挂角标，高分属预期内，判断报告质量仍需人工抽检。
+- **触发重写 8 次**比前两项更值得看：它说明 reviewer 的规则核验确实在拦截草稿，而不是走过场（若恒为 0，反而要怀疑自检是否真的生效）。反过来看，5 个主题**无一**一次通过，也说明写作环节初稿的引用规范仍不稳定。
+- 完成率 5/5、子问题失败 0，只代表这批主题在 `quick` 档下未触及兜底链；**L1–L4 的兜底路径由 `tests/test_smoke.py` 单独覆盖**，不能凭这份报告判断兜底可靠。
+- 5 个主题样本量偏小，且 `quick`/`short` 是轻量档，不能外推到全量 20 主题或 `deep` 档的耗时与成本。
+
+> **`docs/evaluation-report.md` 是真实调用产物**，逐主题原始数据保存在 `docs/evaluation-rows.json`，可离线复核与重算：
+> `python scripts/evaluate.py --reuse docs/evaluation-rows.json`（不调用模型、零成本）。
+>
+> 未配置 API Key 时脚本会自动退回 Mock 模式（确定性模拟，端到端约 0.5s），那种结果只能证明评估脚本跑得通，
+> **不代表真实模型效果**——判断报告是哪一种，看首行「模式」字段即可。要重跑真实评估：
 >
 > ```bash
 > python scripts/evaluate.py --count 20 --real --output docs/evaluation-report.md
@@ -177,11 +209,11 @@ research-agent/
 │       └── log.py           # 统一日志
 ├── frontend/                # SPA：新建/任务详情/历史/统计 四视图（原生 ES6+）
 ├── scripts/
-│   ├── evaluate.py          # 评估集跑分脚本
+│   ├── evaluate.py          # 评估集跑分脚本（--rows 落盘原始数据 / --reuse 离线重算）
 │   ├── smoke_e2e.py         # 端到端冒烟（真起服务验证鉴权边界与鉴权下的 SSE）
 │   └── eval_topics.json     # 20 主题评估集（含 2 个冷门主题测兜底）
-├── tests/                   # 56 项离线测试（conftest.py 逐条隔离进程内限流状态）
-├── docs/                    # 产品设计方案 / 部署指南 / 评估报告
+├── tests/                   # 66 项离线测试（conftest.py 逐条隔离进程内限流状态）
+├── docs/                    # 产品设计方案 / 部署指南 / 评估报告（含 evaluation-rows.json 原始数据）
 ├── data/                    # SQLite（gitignore，Docker 卷）
 └── reports/                 # 生成的报告（gitignore，Docker 卷）
 ```
@@ -190,7 +222,7 @@ research-agent/
 
 - SQLite 单写者模型：单实例部署完全可用；**横向扩展需引入 Redis/PostgreSQL 共享任务状态**
 - Mock 模式为确定性模拟（演示/测试用），不产生真实研究结果
-- 搜索源在国内网络环境下可能需要代理；`ddgs` 免费源有限流可能（L1 链会自动切换）
+- 搜索源以必应网页结果为主源（免 Key，国内网络下无需代理即可用）；但它是**网页抓取而非官方 API**，必应改版时需同步调整选择器；`ddgs` 免费源有限流可能（L1 链会自动切换）
 - 成本估算依赖 `config.yaml` 的 `prices`（每百万 Token 单价），未配置则只统计 Token 数
 - 限流为进程内状态：多副本部署时每个副本各自计数，需改用网关层限流
 - 局部重写/恢复会覆盖报告文件（数据库与磁盘同步更新），历史版本快照保留在 SQLite 中，可随时回退
