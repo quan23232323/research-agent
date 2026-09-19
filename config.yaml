@@ -1,21 +1,22 @@
 # 模型分层选型 —— 对应《产品设计方案》5.1：不同环节对模型能力要求差异极大
-# 具体型号按当期刊例价自行调整；DeepSeek 全系一个型号时可按档位语义注释理解
+# 型号需与账号实际可用的模型一致（本机实测账号内为 deepseek-flash / deepseek-v4-pro）；
+# 换供应商时按档位语义替换即可：旗舰档给规划与写作，中档给高频的研究与核查环节。
 models:
   planner:                      # 旗舰档：规划质量决定全局，只调用 1 次，值得花
-    model: "deepseek-chat"
-    fallback_models: ["deepseek-chat"]   # L2 兜底：同档位备选
+    model: "deepseek-v4-pro"
+    fallback_models: ["deepseek-flash"]   # L2 兜底：同档位备选
   researcher:                   # 中档：ReAct 循环 10+ 次，是成本大头（GLM 用户可填 glm-4-air）
-    model: "deepseek-chat"
-    fallback_models: ["deepseek-chat"]
+    model: "deepseek-flash"
+    fallback_models: ["deepseek-flash"]
   writer:                       # 中档偏上：写作质量用户直接感知
-    model: "deepseek-chat"
-    fallback_models: ["deepseek-chat"]
+    model: "deepseek-v4-pro"
+    fallback_models: ["deepseek-flash"]
   reviewer:                     # 中档：核查任务，指令遵循 > 创造力
-    model: "deepseek-chat"
-    fallback_models: ["deepseek-chat"]
+    model: "deepseek-flash"
+    fallback_models: ["deepseek-flash"]
   followup:                     # 中档：报告追问，基于已收集素材的轻量问答
-    model: "deepseek-chat"
-    fallback_models: ["deepseek-chat"]
+    model: "deepseek-flash"
+    fallback_models: ["deepseek-flash"]
 
 # 成本防线 —— 对应设计方案第 6 节
 budget:
@@ -43,9 +44,11 @@ security:
 export:
   html: true                    # 报告落盘时同时生成独立 HTML 版本
 
-# 搜索兜底链 —— 对应设计方案 7.1 L1：duckduckgo → tavily → bocha
+# 搜索兜底链 —— 对应设计方案 7.1 L1：主源 → 商业源（有 Key 才启用）→ 免 Key 网页源
+# 主源设为 bing 的原因：DuckDuckGo 在国内网络下经常整体不可达，放在主位会让每次检索
+# 先白等两轮重试；bing 免 Key 且可达，更适合作为默认主源（ddg 仍留在链条末端兜底）。
 search:
-  primary: "duckduckgo"
+  primary: "bing"
   request_timeout: 15
   page_max_chars: 4000          # read_page 正文截断（Token 预算控制）
 

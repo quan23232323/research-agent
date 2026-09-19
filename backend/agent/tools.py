@@ -1,6 +1,7 @@
 """工具层：web_search / read_page / write_report —— 对应《产品设计方案》第 4 节工具层与 7.1 L1 兜底。
 
-L1 兜底链：重试 2 次 -> 切换搜索源（duckduckgo -> tavily -> bocha）-> 抛 ToolError 由上层跳过并标记。
+L1 兜底链：重试 2 次 -> 切换搜索源（主源 -> tavily/bocha（有 Key 才启用）-> bing -> duckduckgo）
+-> 抛 ToolError 由上层跳过并标记。
 成本防线（第 6 节）：URL/查询缓存复用；read_page 截断到 page_max_chars。
 """
 import asyncio
@@ -102,12 +103,45 @@ def _search_provider(provider: str, query: str, s: Settings) -> list[dict]:
         return [{"title": x.get("name", ""), "url": x.get("url", ""),
                  "snippet": (x.get("summary") or "")[:300]} for x in pages]
 
+    if provider == "bing":
+        # 必应网页结果（无需 Key）。存在的意义：DuckDuckGo 在国内网络下经常整体不可达，
+        # 只留 ddg 会导致整条兜底链直接失败。代价是它属于非官方抓取，
+        # 必应改版时需同步调整下面的选择器。
+        # 显式标注为 dict[str, str]：混合字面量会被 mypy 推成 dict[str, object]，
+        # 与 requests 期望的查询参数类型不兼容
+        params: dict[str, str] = {"q": query, "setlang": "zh-CN", "count": "10"}
+        r = requests.get(
+            "https://www.bing.com/search",
+            params=params,
+            headers={**UA, "Accept-Language": "zh-CN,zh;q=0.9"},
+            timeout=s.request_timeout,
+        )
+        r.raise_for_status()
+        soup = BeautifulSoup(r.text, "lxml")
+        out: list[dict] = []
+        for li in soup.select("li.b_algo"):
+            a = li.select_one("h2 a")
+            if a is None or not a.get("href"):
+                continue
+            caption = li.select_one(".b_caption p") or li.select_one("p")
+            out.append({
+                "title": a.get_text(" ", strip=True),
+                "url": a["href"],
+                "snippet": (caption.get_text(" ", strip=True) if caption else "")[:300],
+            })
+        return out[:5]
+
     raise ToolError(f"未知搜索源：{provider}")
 
 
 def _provider_chain(s: Settings) -> list[str]:
+    """L1 第二层：搜索源切换顺序。
+
+    bing 排在 duckduckgo 之前——它是国内网络下唯一无需 Key 又可达的网页源，
+    放在链条前段可以让兜底真正生效，而不是等一个必然失败的源重试两轮。
+    """
     chain = [s.search_primary]
-    for p in ("tavily", "bocha", "duckduckgo"):
+    for p in ("tavily", "bocha", "bing", "duckduckgo"):
         if p not in chain:
             key_env = {"tavily": "TAVILY_API_KEY", "bocha": "BOCHA_API_KEY"}.get(p)
             if key_env is None or os.getenv(key_env):
