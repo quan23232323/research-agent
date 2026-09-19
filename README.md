@@ -20,20 +20,9 @@
 
 ## 架构
 
-```text
-前端 SPA (hash 路由四视图)     后端 (FastAPI + 中间件)            LangGraph 工作流
-┌──────────────┐   POST /api/plan    ┌──────────┐
-│ 新建研究      │ ──────────────────→ │ planner  │ 子问题清单（可增删改）
-│  · 主题输入   │ ←────────────────── │ (旗舰档)  │
-│  · 计划编辑   │   POST /api/research└──────────┘
-│  · 进度轨迹   │ ──────────────────→  researcher（中档，并行 ReAct：web_search → read_page）
-│ 任务详情      │ ←── SSE 实时事件 ──  writer    （流式撰写，报告附来源角标 [n]）
-│  · 报告/来源  │                      reviewer  （角标核验 + 链接存活 + LLM 审稿，可打回重写）
-│  · 追问/重写  │                      报告落盘 reports/*.md + .html，任务归档 SQLite
-│ 历史记录      │                      data/research.db（重启不丢，支持归档任务追问/重写）
-│ 统计面板      │                      鉴权中间件 / IP 限流 / 安全响应头 / 配置校验
-└──────────────┘
-```
+![架构总览](docs/images/architecture.svg)
+
+一句话概括：**规划 → 检索 → 写作 → 评审** 四角色串行协作，评审不通过就打回重写；全链路有 L0–L4 五级兜底保证「部分也能交付」；成本由 Token 硬顶、ReAct 轮次上限与缓存三道防线控制。
 
 核心设计（与产品方案一一对应）：
 
@@ -127,6 +116,26 @@ python scripts/evaluate.py --count 20 --real --output docs/evaluation-report.md
 
 全部测试离线运行（Mock 模式），无需任何 API Key。
 
+### 评估指标说明
+
+`scripts/evaluate.py` 会拿评估集逐个主题跑完整链路，并输出下列指标（对应产品设计方案第 8 节）：
+
+| 指标 | 含义 |
+| --- | --- |
+| 完成率 | 成功交付报告的主题数 / 总主题数 |
+| 要点支撑率 | 报告中每个要点能否在已收集素材里找到依据（衡量「无来源不陈述」的落实程度） |
+| 角标有效率 | 引用角标 `[n]` 是否都落在来源列表范围内，越界即无效 |
+| 平均来源数 | 每份报告实际引用的来源条数 |
+| 平均 Token 与成本 | 按 `config.yaml` 的 `prices` 单价折算，用于成本回归 |
+| 子问题失败总数 / 触发重写总数 | 兜底机制与自检机制被真实触发的次数 |
+
+> ⚠️ **当前仓库里的 `docs/evaluation-report.md` 是 Mock 模式产物**：LLM 与搜索均为确定性模拟（端到端耗时约 0.5s），它只能证明评估脚本本身跑得通，**不代表真实模型效果**。
+> 填入 API Key 后跑真实评估即可覆盖该文件：
+>
+> ```bash
+> python scripts/evaluate.py --count 20 --real --output docs/evaluation-report.md
+> ```
+
 ## 部署
 
 ```bash
@@ -185,7 +194,7 @@ research-agent/
 - 成本估算依赖 `config.yaml` 的 `prices`（每百万 Token 单价），未配置则只统计 Token 数
 - 限流为进程内状态：多副本部署时每个副本各自计数，需改用网关层限流
 - 局部重写/恢复会覆盖报告文件（数据库与磁盘同步更新），历史版本快照保留在 SQLite 中，可随时回退
-- 尚未引入 lint / 格式化 / 类型检查（ruff / black / mypy），CI 目前只跑 pytest 与前端语法检查
+- 尚未引入代码格式化门禁（black / prettier）；CI 现跑 **ruff 静态检查 + mypy 类型检查 + pytest + 前端语法检查**
 
 ## 更新日志
 

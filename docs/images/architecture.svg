@@ -1,0 +1,118 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1180 918" width="1180" height="918" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif">
+  <defs>
+    <marker id="a2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#8A97A8"/>
+    </marker>
+    <marker id="a2r" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#C2703A"/>
+    </marker>
+  </defs>
+
+  <rect x="0" y="0" width="1180" height="918" fill="#FFFFFF"/>
+  <text x="40" y="34" font-size="17" font-weight="700" fill="#111827">智能研究助手 Agent · 架构总览</text>
+  <text x="40" y="54" font-size="11.5" fill="#6B7280">四角色协作（规划 / 检索 / 写作 / 评审）｜ LangGraph 编排 · SSE 实时轨迹 · L0–L4 五级兜底 · 成本防线</text>
+
+  <!-- 前端 -->
+  <rect x="40" y="72" width="1100" height="72" rx="10" fill="#EDF3FE" stroke="#4A8DF6" stroke-width="1.4"/>
+  <text x="62" y="97" font-size="13.5" font-weight="700" fill="#1E3A8A">前端 SPA · 原生 ES6+（无框架），hash 路由四视图</text>
+  <text x="62" y="117" font-size="11.5" fill="#475569">新建研究（可编辑子问题）｜ 任务详情（实时轨迹 + 流式预览）｜ 历史记录 ｜ 统计面板</text>
+  <text x="62" y="134" font-size="11.5" fill="#475569">用 fetch + ReadableStream 自解析 SSE（原生 EventSource 无法携带鉴权请求头）</text>
+
+  <path d="M 590 144 L 590 170" stroke="#8A97A8" stroke-width="1.6" marker-end="url(#a2)"/>
+  <text x="600" y="162" font-size="10.5" fill="#6B7280">REST / SSE</text>
+
+  <!-- 后端 -->
+  <rect x="40" y="172" width="1100" height="68" rx="10" fill="#F5F8FF" stroke="#93B4EC" stroke-width="1.4"/>
+  <text x="62" y="196" font-size="13.5" font-weight="700" fill="#1E40AF">FastAPI 应用层 + 中间件</text>
+  <text x="62" y="216" font-size="11.5" fill="#475569">可选令牌鉴权（AUTH_TOKEN）｜ 按客户端 IP 滑动窗口限流 ｜ 安全响应头 ｜ 启动配置校验</text>
+  <text x="62" y="233" font-size="11.5" fill="#475569">任务事件总线（SSE 数据源，带内存上限保护）｜ 接口文档端点默认关闭</text>
+
+  <path d="M 590 240 L 590 272" stroke="#8A97A8" stroke-width="1.6" marker-end="url(#a2)"/>
+
+  <!-- LangGraph 四角色 -->
+  <rect x="40" y="274" width="1100" height="24" rx="6" fill="#EEF0FE" stroke="#6D74D8" stroke-width="1.2"/>
+  <text x="56" y="291" font-size="12.5" font-weight="700" fill="#3730A3">LangGraph 工作流 · 四角色串行协作（每角色独立模型档位）</text>
+
+  <rect x="40" y="306" width="248" height="86" rx="9" fill="#F7F8FF" stroke="#8E93E0" stroke-width="1.2"/>
+  <text x="58" y="329" font-size="12.5" font-weight="700" fill="#3730A3">planner · 规划</text>
+  <text x="58" y="349" font-size="11.5" fill="#475569">主题 → 3~5 个子问题</text>
+  <text x="58" y="366" font-size="11.5" fill="#475569">人工可增删改后再开始</text>
+
+  <rect x="314" y="306" width="248" height="86" rx="9" fill="#F7F8FF" stroke="#8E93E0" stroke-width="1.2"/>
+  <text x="332" y="329" font-size="12.5" font-weight="700" fill="#3730A3">researcher · 检索</text>
+  <text x="332" y="349" font-size="11.5" fill="#475569">并行 ReAct 循环：</text>
+  <text x="332" y="366" font-size="11.5" fill="#475569">搜索 → 阅读 → 小结</text>
+
+  <rect x="588" y="306" width="248" height="86" rx="9" fill="#F7F8FF" stroke="#8E93E0" stroke-width="1.2"/>
+  <text x="606" y="329" font-size="12.5" font-weight="700" fill="#3730A3">writer · 撰写</text>
+  <text x="606" y="349" font-size="11.5" fill="#475569">流式生成报告</text>
+  <text x="606" y="366" font-size="11.5" fill="#475569">强制来源角标 [n]</text>
+
+  <rect x="862" y="306" width="248" height="86" rx="9" fill="#F7F8FF" stroke="#8E93E0" stroke-width="1.2"/>
+  <text x="880" y="329" font-size="12.5" font-weight="700" fill="#3730A3">reviewer · 评审</text>
+  <text x="880" y="349" font-size="11.5" fill="#475569">角标越界 + 链接存活</text>
+  <text x="880" y="366" font-size="11.5" fill="#475569">+ LLM 审稿</text>
+
+  <path d="M 288 349 L 310 349" stroke="#8A97A8" stroke-width="1.6" marker-end="url(#a2)"/>
+  <path d="M 562 349 L 584 349" stroke="#8A97A8" stroke-width="1.6" marker-end="url(#a2)"/>
+  <path d="M 836 349 L 858 349" stroke="#8A97A8" stroke-width="1.6" marker-end="url(#a2)"/>
+
+  <!-- 打回重写回环（走角色框下方的独立通道）-->
+  <path d="M 986 392 L 986 416 L 712 416 L 712 392" stroke="#C2703A" stroke-width="1.5" fill="none" stroke-dasharray="5 4" marker-end="url(#a2r)"/>
+  <text x="849" y="410" font-size="10.5" fill="#C2703A" text-anchor="middle">不合格打回重写（上限 2 次）</text>
+
+  <!-- 工具层 -->
+  <rect x="40" y="436" width="1100" height="58" rx="9" fill="#EAF7F5" stroke="#3FA898" stroke-width="1.2"/>
+  <text x="62" y="459" font-size="12.5" font-weight="700" fill="#0F5C54">工具层 tools.py</text>
+  <text x="62" y="479" font-size="11.5" fill="#475569">web_search（DuckDuckGo → Tavily → Bocha 的 L1 兜底链，失败重试 2 次后换源）｜ read_page（正文抽取 + 截断 + 缓存）｜ write_report</text>
+  <path d="M 438 392 L 438 436" stroke="#8A97A8" stroke-width="1.6" marker-end="url(#a2)"/>
+
+  <!-- 模型分层 + 成本防线 -->
+  <rect x="40" y="510" width="545" height="58" rx="9" fill="#F5F8FF" stroke="#93B4EC" stroke-width="1.2"/>
+  <text x="60" y="533" font-size="12.5" font-weight="700" fill="#1E40AF">模型分层选型</text>
+  <text x="60" y="553" font-size="11.5" fill="#475569">planner / researcher / writer / reviewer / followup 五档独立配置</text>
+
+  <rect x="595" y="510" width="545" height="58" rx="9" fill="#FDF1E5" stroke="#E8934A" stroke-width="1.2"/>
+  <text x="615" y="533" font-size="12.5" font-weight="700" fill="#9A4B0B">成本防线</text>
+  <text x="615" y="553" font-size="11.5" fill="#475569">Token 硬顶 150K ｜ ReAct ≤ 6 轮 ｜ 素材 ≤ 12 条 ｜ URL 与查询结果缓存</text>
+
+  <!-- 交付与持久化 -->
+  <rect x="40" y="584" width="545" height="64" rx="9" fill="#F8F6FE" stroke="#A99CD9" stroke-width="1.2"/>
+  <text x="60" y="607" font-size="12.5" font-weight="700" fill="#3F3277">交付产物</text>
+  <text x="60" y="627" font-size="11.5" fill="#475569">reports/*.md 与单文件 *.html（可直接下载 / 打印）</text>
+  <text x="60" y="643" font-size="11.5" fill="#475569">报告含参考来源列表，角标可点击跳转</text>
+
+  <rect x="595" y="584" width="545" height="64" rx="9" fill="#F8F6FE" stroke="#A99CD9" stroke-width="1.2"/>
+  <text x="615" y="607" font-size="12.5" font-weight="700" fill="#3F3277">持久化</text>
+  <text x="615" y="627" font-size="11.5" fill="#475569">SQLite（data/research.db）：任务 / 归档 / 统计 / 版本快照</text>
+  <text x="615" y="643" font-size="11.5" fill="#475569">重启不丢；归档任务同样支持追问与局部重写</text>
+
+  <path d="M 590 568 L 590 584" stroke="#8A97A8" stroke-width="1.6" marker-end="url(#a2)"/>
+
+  <!-- 交付后交互 -->
+  <rect x="40" y="664" width="1100" height="54" rx="9" fill="#EDF3FE" stroke="#4A8DF6" stroke-width="1.2"/>
+  <text x="62" y="687" font-size="12.5" font-weight="700" fill="#1E3A8A">交付后交互</text>
+  <text x="62" y="707" font-size="11.5" fill="#475569">报告追问（仅基于已收集素材作答）｜ 局部重写指定小节（重写前自动存档，可查看历史版本并一键恢复）</text>
+
+  <!-- 兜底 -->
+  <rect x="40" y="734" width="1100" height="72" rx="9" fill="#FFF7F0" stroke="#E8934A" stroke-width="1.4"/>
+  <text x="62" y="757" font-size="12.5" font-weight="700" fill="#9A4B0B">五级兜底 L0 → L4（保证「部分也能交付」）</text>
+  <text x="62" y="777" font-size="11.5" fill="#475569">L0 输入校验（空 / 超长 / 敏感词）　→　L1 工具失败重试换源　→　L2 模型指数退避 + 同档互换 / 流式降级</text>
+  <text x="62" y="795" font-size="11.5" fill="#475569">L3 撰写失败或预算触顶 → 自动降级「素材汇编版」报告　→　L4 全局失败时明确报错并把已收集素材交回前端</text>
+
+  <!-- 工程与评估 -->
+  <rect x="40" y="822" width="1100" height="58" rx="9" fill="#EAF7F5" stroke="#3FA898" stroke-width="1.2"/>
+  <text x="62" y="845" font-size="12.5" font-weight="700" fill="#0F5C54">工程化与评估</text>
+  <text x="62" y="865" font-size="11.5" fill="#475569">56 项离线测试 + ruff 静态检查 + mypy 类型检查（GitHub Actions CI）｜ Dockerfile / docker-compose 一键部署</text>
+
+  <!-- 图例 -->
+  <rect x="40" y="898" width="11" height="11" rx="3" fill="#F7F8FF" stroke="#8E93E0"/>
+  <text x="58" y="908" font-size="11" fill="#6B7280">Agent 工作流</text>
+  <rect x="150" y="898" width="11" height="11" rx="3" fill="#EAF7F5" stroke="#3FA898"/>
+  <text x="168" y="908" font-size="11" fill="#6B7280">工具与工程</text>
+  <rect x="258" y="898" width="11" height="11" rx="3" fill="#FDF1E5" stroke="#E8934A"/>
+  <text x="276" y="908" font-size="11" fill="#6B7280">成本与兜底</text>
+  <rect x="366" y="898" width="11" height="11" rx="3" fill="#F8F6FE" stroke="#A99CD9"/>
+  <text x="384" y="908" font-size="11" fill="#6B7280">交付与持久化</text>
+  <text x="1140" y="908" font-size="11" fill="#9CA3AF" text-anchor="end">评估集：scripts/evaluate.py + 20 主题（含 2 个冷门主题用于测兜底）</text>
+</svg>
